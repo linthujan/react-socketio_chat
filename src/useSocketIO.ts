@@ -6,8 +6,8 @@ const useSocketIO = () => {
     const [socket, setSocket] = useState<Socket<DefaultEventsMap, DefaultEventsMap>>();
 
     const initSocket = (token: string) => {
-        // console.log('initSocket');
-        // console.log(`useSocketIO`, socket);
+        // console.log(`token`, token);
+
         if (!socket) {
             const newSocket = io(process.env.BACKEND_URL!, {
                 autoConnect: false,

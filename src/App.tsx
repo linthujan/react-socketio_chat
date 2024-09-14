@@ -7,15 +7,36 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const baseurl = process.env.BACKEND_URL;
 
+interface User {
+  user_id: string,
+  username: string
+}
+interface Event {
+  event_id: string,
+  name: string
+}
+interface Chat {
+  id: string,
+  chat_id: string,
+  event: Event,
+}
+interface Message {
+  fromSelf: boolean;
+  text: string;
+  user_id: string;
+  id: string,
+  message_id: string,
+}
+
 function App() {
-  const [user, setUser] = useState<any>();
-  const [users, setUsers] = useState<any[]>([]);
+  const [user, setUser] = useState<User | undefined>();
+  const [users, setUsers] = useState<User[]>([]);
   const [email, setEmail] = useState<string>("admin@gmail.com");
   const [message, setMessage] = useState<string>();
   const [token, setToken] = useState<string>();
-  const [chat, setChat] = useState<any>();
-  const [chats, setChats] = useState<any[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [chat, setChat] = useState<Chat | undefined>();
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [typingId, setTypingId] = useState<string>();
   const { socket, initSocket } = useSocketIO();
 
@@ -52,11 +73,23 @@ function App() {
         console.log('disconnected, reason :', reason);
       });
 
+      socket.on("connect_error", (err) => {
+        // the reason of the error, for example "xhr poll error"
+        // console.log(err.message);
+        // console.log(`err`, err);
+
+        // // some additional description, for example the status code of the initial HTTP response
+        // console.log(err.description);
+
+        // // some additional context, for example the XMLHttpRequest object
+        // console.log(err.context);
+      });
+
       socket.on('message', (data) => {
-        data['fromSelf'] = data.user_id == user.user_id;
+        data['fromSelf'] = data.user_id == user!.user_id;
         console.log(`event : message`, data);
 
-        setMessages((prev: any[]) => ([...prev, data]));
+        setMessages((prev: { message_id: string }[]) => [...prev, data]);
       });
 
       socket.on('typing', (user_id) => {
@@ -67,8 +100,8 @@ function App() {
 
   useEffect(() => {
     if (typingId) {
-      const user = users.find(u => u.user_id == typingId);
-      toast.info(`${user.username[0].toUpperCase()}${user.username.slice(1)} is typing...`);
+      const user = users.find((u: User) => u.user_id == typingId);
+      toast.info(`${user?.username[0].toUpperCase()}${user?.username.slice(1)} is typing...`);
       setTypingId(undefined);
     }
   }, [typingId]);
@@ -96,7 +129,7 @@ function App() {
     }
 
     console.log(`sent typing`);
-    socket.emit('typing', chat.chat_id);
+    socket.emit('typing', chat!.chat_id);
   }
 
   function selectChat(event: React.ChangeEvent<HTMLInputElement>) {
@@ -118,6 +151,7 @@ function App() {
     socket.emit('send_message', chat.chat_id, {
       text: message,
       type: "text",
+      to_user_id: 'user_id'
     });
     setMessage("");
   }
@@ -132,7 +166,7 @@ function App() {
     socket.disconnect();
   }
 
-  async function loginWithMail(email: string): Promise<{ user: any; token: string; }> {
+  async function loginWithMail(email: string): Promise<{ user: User; token: string; }> {
     const response = await axios.post(`${baseurl}/api/auth/login`, {
       email,
       password: "12345678",
@@ -176,7 +210,7 @@ function App() {
 
       {chats.length ?
         (<div className='text-start'>
-          {chats.map(c => (<div key={c.id} className='form-check'>
+          {chats.map((c: Chat) => (<div key={c.id} className='form-check'>
             <input type="radio" className='form-check-input' id={c.id}
               checked={c.chat_id == chat?.chat_id} value={c.chat_id} onChange={selectChat} />
             <label className='form-check-label' htmlFor={c.id} style={{ cursor: 'pointer' }}>{c.event.name}</label>
@@ -194,7 +228,7 @@ function App() {
           </div>
 
           <div>
-            {messages.map((message) => {
+            {messages.map((message: Message) => {
               const user = users.find(u => u.user_id == message.user_id);
               console.log(`users`, users);
 
