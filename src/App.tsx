@@ -151,7 +151,7 @@ function App() {
     socket.emit('send_message', chat.chat_id, {
       text: message,
       type: "text",
-      to_user_id: 'user_id'
+      to_user_id: null
     });
     setMessage("");
   }
@@ -171,6 +171,10 @@ function App() {
       email,
       password: "12345678",
       recaptcha_verified: true,
+    }, {
+      headers: {
+        'ngrok-skip-browser-warning': true,
+      }
     });
 
     return response.data.data;
@@ -179,7 +183,9 @@ function App() {
   async function getChat(chat_id: string, token: string) {
     const response = await axios.get(`${baseurl}/api/chat/${chat_id}`, {
       headers: {
+        "Content-Type": 'application/json',
         'Authorization': `Bearer ${token}`,
+        'ngrok-skip-browser-warning': true,
       },
     });
 
@@ -192,6 +198,7 @@ function App() {
   async function getChats(token: string) {
     const response = await axios.get(`${baseurl}/api/chat`, {
       headers: {
+        'ngrok-skip-browser-warning': true,
         'Authorization': `Bearer ${token}`,
       },
     });

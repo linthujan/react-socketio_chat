@@ -13,6 +13,7 @@ const useSocketIO = () => {
                 autoConnect: false,
                 extraHeaders: {
                     Authorization: `Bearer ${token}`,
+                    'ngrok-skip-browser-warning': 'true',
                 },
                 auth: {
                     chatOffset: 0,
